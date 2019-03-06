@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 
 import com.stomhong.test.R;
@@ -33,6 +34,8 @@ public class MediaRecorderActivity extends AppCompatActivity implements TextureV
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_media_recorder);
 
         init();
@@ -47,7 +50,13 @@ public class MediaRecorderActivity extends AppCompatActivity implements TextureV
             public void onClick(View v) {
                 if (!isRecord) {
                     isRecord = true;
+//                    new Thread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                        }
+//                    }).start();
                     record();
+
                     mBtnRecord.setText("stop");
                 }else {
                     isRecord = false;
@@ -59,9 +68,21 @@ public class MediaRecorderActivity extends AppCompatActivity implements TextureV
     }
 
     @Override
+    protected void onRestart() {
+        super.onRestart();
+//        openCamera(Camera.CameraInfo.CAMERA_FACING_BACK,surface);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+//        stop();
+    }
+
+    @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         this.surface = surface;
-        openCamera(Camera.CameraInfo.CAMERA_FACING_BACK,surface);
+        openCamera(Camera.CameraInfo.CAMERA_FACING_FRONT,surface);
     }
 
     @Override
@@ -86,7 +107,8 @@ public class MediaRecorderActivity extends AppCompatActivity implements TextureV
     public void openCamera(int position,SurfaceTexture surface){
         current_camera = position;
         camera = Camera.open(position);//打开摄像头
-        parameters= camera.getParameters();//设置参数   parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);//设置自动对焦
+        parameters= camera.getParameters();//设置参数
+         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);//设置自动对焦
         try {
             parameters.setPreviewSize(1920,1080);//设置预览尺寸，为了全屏展示，我们选择最大尺寸，同时TextureView也应该是match_parent全屏
             camera.setParameters(parameters);//设置相机的参数
