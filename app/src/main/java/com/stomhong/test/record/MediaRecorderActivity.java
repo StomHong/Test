@@ -136,8 +136,6 @@ public class MediaRecorderActivity extends AppCompatActivity implements TextureV
 
         mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT); // 设置音频的编码格式
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264); // 设置视频的编码格式
-//        mediaRecorder.setVideoSize(176, 144);  // 设置视频大小
-//        mediaRecorder.setVideoSize(320, 240);  // 设置视频大小
         mMediaRecorder.setVideoSize(1920, 1080);  // 设置视频大小
         mMediaRecorder.setVideoEncodingBitRate(5*1024*1024);
         mMediaRecorder.setVideoFrameRate(60); // 设置帧率
