@@ -82,7 +82,7 @@ public class MediaRecorderActivity extends AppCompatActivity implements TextureV
     @Override
     public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
         this.surface = surface;
-        openCamera(Camera.CameraInfo.CAMERA_FACING_FRONT,surface);
+        openCamera(Camera.CameraInfo.CAMERA_FACING_BACK,surface);
     }
 
     @Override
@@ -109,6 +109,7 @@ public class MediaRecorderActivity extends AppCompatActivity implements TextureV
         camera = Camera.open(position);//打开摄像头
         parameters= camera.getParameters();//设置参数
          parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);//设置自动对焦
+        parameters.setPreviewFpsRange(30,40);
         try {
             parameters.setPreviewSize(1920,1080);//设置预览尺寸，为了全屏展示，我们选择最大尺寸，同时TextureView也应该是match_parent全屏
             camera.setParameters(parameters);//设置相机的参数
@@ -138,7 +139,7 @@ public class MediaRecorderActivity extends AppCompatActivity implements TextureV
         mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264); // 设置视频的编码格式
         mMediaRecorder.setVideoSize(1920, 1080);  // 设置视频大小
         mMediaRecorder.setVideoEncodingBitRate(5*1024*1024);
-        mMediaRecorder.setVideoFrameRate(60); // 设置帧率
+        mMediaRecorder.setVideoFrameRate(30); // 设置帧率
         /*
          * 设置视频文件的翻转角度
          * 改变保存后的视频文件播放时是否横屏(不加这句，视频文件播放的时候角度是反的)
@@ -155,14 +156,14 @@ public class MediaRecorderActivity extends AppCompatActivity implements TextureV
 
 
         //设置视频存储路径
-        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES) + File.separator + "yuewu");
+        File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM) + "/Camera/RenRenYouPin");   
         if (!file.exists()) {
             //多级文件夹的创建
             file.mkdirs();
         }
 
-        Log.d(TAG, "record: path " +file.getPath() + File.separator + "乐舞_" + System.currentTimeMillis() + ".mp4");
-        mMediaRecorder.setOutputFile(file.getPath() + File.separator + "乐舞_" + System.currentTimeMillis() + ".mp4");
+        Log.d(TAG, "record: path " +file.getPath() + File.separator + "stomhong" + System.currentTimeMillis() + ".mp4");
+        mMediaRecorder.setOutputFile(file.getPath() + File.separator + "stomhong" + System.currentTimeMillis() + ".mp4");
 
         //开始录制
         try {
