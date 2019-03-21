@@ -40,14 +40,14 @@
         </activity>
         <activity android:name=".play.PlayActivity" />
         <activity android:name=".play.PlayFullscreenActivity" >
-
-        </activity>
-        <activity android:name=".record.MediaCodec2Activity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".record.MediaCodec2Activity" >
+
         </activity>
     </application>
 

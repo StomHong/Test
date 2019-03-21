@@ -51,24 +51,24 @@ public class MediaCodec2Activity extends AppCompatActivity implements SurfaceHol
         mSurfaceView = findViewById(R.id.surfaceView);
         mSurfaceView.getHolder().addCallback(this);
 
-        mBufferInfo = new MediaCodec.BufferInfo();
-
-        //配置媒体格式
-        MediaFormat format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, VIDEO_WIDTH, VIDEO_HEIGHT);
-        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);//颜色
-        format.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);//比特率
-        format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);//帧率
-        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);//I帧间隔，I帧间隔越小视频压缩率越低,视频就会越大
-        try {
-            //创建编码器
-            mEncoder = MediaCodec.createEncoderByType(MIME_TYPE);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        //配置编码器
-        mEncoder.configure(format,null,null,0);
-        //启动编码器
-        mEncoder.start();
+//        mBufferInfo = new MediaCodec.BufferInfo();
+//
+//        //配置媒体格式
+//        MediaFormat format = MediaFormat.createVideoFormat(MediaFormat.MIMETYPE_VIDEO_AVC, VIDEO_WIDTH, VIDEO_HEIGHT);
+//        format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);//颜色
+//        format.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);//比特率
+//        format.setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE);//帧率
+//        format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, IFRAME_INTERVAL);//I帧间隔，I帧间隔越小视频压缩率越低,视频就会越大
+//        try {
+//            //创建编码器
+//            mEncoder = MediaCodec.createEncoderByType(MIME_TYPE);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        //配置编码器
+//        mEncoder.configure(format,mSurfaceView.getHolder().getSurface(),null,0);
+//        //启动编码器
+//        mEncoder.start();
     }
 
     /**
@@ -104,7 +104,7 @@ public class MediaCodec2Activity extends AppCompatActivity implements SurfaceHol
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        openCamera(Camera.CameraInfo.CAMERA_FACING_FRONT,holder);
+        openCamera(Camera.CameraInfo.CAMERA_FACING_BACK,holder);
     }
 
     @Override
