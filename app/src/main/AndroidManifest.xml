@@ -42,7 +42,8 @@
         <activity android:name=".play.PlayFullscreenActivity" >
 
         </activity>
-        <activity android:name=".record.MediaCodec2Activity" >
+        <activity android:name=".record.MediaCodec2Activity"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
