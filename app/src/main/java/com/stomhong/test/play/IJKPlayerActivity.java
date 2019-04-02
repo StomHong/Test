@@ -38,7 +38,7 @@ public class IJKPlayerActivity extends AppCompatActivity {
         mSurfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
             @Override
             public void surfaceCreated(SurfaceHolder holder) {
-                mPlayer.setDisplay(holder);
+
             }
 
             @Override
