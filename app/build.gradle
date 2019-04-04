@@ -44,4 +44,5 @@ dependencies {
     implementation 'tv.danmaku.ijk.media:ijkplayer-x86_64:0.8.8'
     implementation 'tv.danmaku.ijk.media:ijkplayer-exo:0.8.8'
     implementation 'com.github.DingMouRen:LayoutManagerGroup:1e6f4f96eb'
+    implementation project(":library")
 }

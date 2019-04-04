@@ -93,7 +93,7 @@ public class ViewPagerLayoutManagerActivity extends AppCompatActivity {
             public boolean onInfo(MediaPlayer mp, int what, int extra) {
                 mediaPlayer[0] = mp;
                 mp.setLooping(true);
-                imgThumb.animate().alpha(0).setDuration(200).start();
+                imgThumb.animate().alpha(0.0f).setDuration(200).start();
                 return false;
             }
         });
@@ -110,11 +110,11 @@ public class ViewPagerLayoutManagerActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (videoView.isPlaying()){
-                    imgPlay.animate().alpha(1f).start();
+                    imgPlay.animate().alpha(1.0f).start();
                     videoView.pause();
                     isPlaying = false;
                 }else {
-                    imgPlay.animate().alpha(0f).start();
+                    imgPlay.animate().alpha(0.0f).start();
                     videoView.start();
                     isPlaying = true;
                 }
@@ -128,8 +128,8 @@ public class ViewPagerLayoutManagerActivity extends AppCompatActivity {
         final ImageView imgThumb = itemView.findViewById(R.id.img_thumb);
         final ImageView imgPlay = itemView.findViewById(R.id.img_play);
         videoView.stopPlayback();
-        imgThumb.animate().alpha(1).start();
-        imgPlay.animate().alpha(0f).start();
+        imgThumb.animate().alpha(1.0f).start();
+        imgPlay.animate().alpha(0.0f).start();
     }
 
 
@@ -141,14 +141,14 @@ public class ViewPagerLayoutManagerActivity extends AppCompatActivity {
 
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_view_pager,parent,false);
-            return new ViewHolder(view);
+            return new ViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_view_pager,parent,false));
         }
 
         @Override
         public void onBindViewHolder(ViewHolder holder, int position) {
             holder.img_thumb.setImageResource(imgs[position%2]);
             holder.videoView.setVideoPath("http://9890.vod.myqcloud.com/9890_4e292f9a3dd011e6b4078980237cc3d3.f30.mp4");
+            Log.i("TAG","position === " + position);
         }
 
         @Override
