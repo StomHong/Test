@@ -106,4 +106,14 @@ public class CameraImpl implements ICamera {
             mCamera = null;
         }
     }
+
+    @Override
+    public void joinVideo() {
+
+    }
+
+    @Override
+    public void backDeleteVideo() {
+
+    }
 }

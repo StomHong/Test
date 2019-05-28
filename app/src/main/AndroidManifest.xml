@@ -50,6 +50,12 @@
         </activity>
         <activity android:name=".play.ViewPagerLayoutManagerActivity" >
 
+
+        </activity>
+        <activity android:name=".testlibrary.RecordActivity" >
+
+        </activity>
+        <activity android:name=".record.audio.AudioEncoderActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

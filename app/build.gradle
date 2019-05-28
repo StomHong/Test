@@ -45,4 +45,7 @@ dependencies {
     implementation 'tv.danmaku.ijk.media:ijkplayer-exo:0.8.8'
     implementation 'com.github.DingMouRen:LayoutManagerGroup:1e6f4f96eb'
     implementation project(":library")
+
+    implementation 'org.ccil.cowan.tagsoup:tagsoup:1.2'
+    implementation 'com.googlecode.mp4parser:isoparser:1.1.22'
 }
