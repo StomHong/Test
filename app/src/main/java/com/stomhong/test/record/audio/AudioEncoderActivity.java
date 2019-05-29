@@ -7,6 +7,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.media.MediaRecorder;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -28,13 +29,15 @@ public class AudioEncoderActivity extends AppCompatActivity {
     private int minBufferSize;
     private long prevOutputPTSUs;
     private int mSampleRate = 44100;
-    private int mBitRate = 64000;
+    private int mBitRate = 80000;// MediaCodecInfo.CodecProfileLevel.AACObjectLC >= 80Kbps
     Thread mEncoderThread;
     private AudioRecord mRecord;
     private byte[] mBuffer;
     private MediaCodec.BufferInfo mBufferInfo;
     private byte[] mFrameByte;
-    private int mBufferSize = 2048;
+    private int mBufferSize = 1024;
+
+    FileWriter mFileWriter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -44,6 +47,7 @@ public class AudioEncoderActivity extends AppCompatActivity {
     }
 
     private void init() {
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/test/audio.aac";
         findViewById(R.id.btn_encode_audio).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -53,14 +57,13 @@ public class AudioEncoderActivity extends AppCompatActivity {
                     format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
                     format.setInteger(MediaFormat.KEY_SAMPLE_RATE, mSampleRate);
                     format.setString(MediaFormat.KEY_MIME,audioMime);
-                    format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
-                    mAudioCodec = MediaCodec.createByCodecName("OMX.google.aac.encoder");
+                    format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLTP);
+                    mAudioCodec = MediaCodec.createEncoderByType(audioMime);
                     mAudioCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
                     mAudioCodec.start();
 
                     mBufferInfo = new MediaCodec.BufferInfo();
 
-                    mBuffer = new byte[mBufferSize];
                     int minBufferSize = AudioRecord.getMinBufferSize(mSampleRate, AudioFormat.CHANNEL_IN_STEREO,
                             AudioFormat.ENCODING_PCM_16BIT);
                     mRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, mSampleRate,
@@ -72,6 +75,9 @@ public class AudioEncoderActivity extends AppCompatActivity {
 
                 mEncoderThread = new EncoderThread();
                 mEncoderThread.start();
+
+                mFileWriter = new FileWriter(path);
+                mFileWriter.startWrite();
             }
         });
     }
@@ -90,6 +96,15 @@ public class AudioEncoderActivity extends AppCompatActivity {
             mRecord.release();
             mRecord = null;
         }
+        if (mFileWriter != null){
+            mFileWriter.stopWrite();
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        isRunning = false;
+        super.onBackPressed();
     }
 
     private void encode(byte[] data) {
@@ -112,14 +127,18 @@ public class AudioEncoderActivity extends AppCompatActivity {
             if(mFrameByte==null||mFrameByte.length<length){
                 mFrameByte=new byte[length];
             }
+            outputBuffer.position(mBufferInfo.offset);
+            outputBuffer.limit(mBufferInfo.offset + mFrameByte.length);
             addADTStoPacket(mFrameByte,length);
             outputBuffer.get(mFrameByte,7,mBufferInfo.size);
+            outputBuffer.position(mBufferInfo.offset);
 //            boolean isSusscess1=mClient.sendInt(length);
 //            boolean isSusscess2=mClient.send(mFrameByte,0,length);
 //            if(!(isSusscess1&&isSusscess2)){
 //                isRunning=false;
 //                mClient.release();
 //            }
+            mFileWriter.writeToFile(ByteBuffer.wrap(mFrameByte));
             mAudioCodec.releaseOutputBuffer(outputBufferIndex, false);
             outputBufferIndex = mAudioCodec.dequeueOutputBuffer(mBufferInfo, 0);
 
@@ -148,7 +167,7 @@ public class AudioEncoderActivity extends AppCompatActivity {
     class EncoderThread extends Thread{
         @Override
         public void run() {
-
+            mBuffer = new byte[mBufferSize];
             while (isRunning){
                 int num = mRecord.read(mBuffer,0,mBufferSize);
                 Log.d("tag === ",num + " " + mBuffer.toString());
