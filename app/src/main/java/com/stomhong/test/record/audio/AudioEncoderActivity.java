@@ -26,16 +26,15 @@ public class AudioEncoderActivity extends AppCompatActivity {
 
     private MediaCodec mAudioCodec;
     private AudioRecord mAudioRecorder;
-    private int minBufferSize;
     private long prevOutputPTSUs;
-    private int mSampleRate = 44100;
-    private int mBitRate = 80000;// MediaCodecInfo.CodecProfileLevel.AACObjectLC >= 80Kbps
+    private int mSampleRate = 44100;//采样率
+    private int mBitRate = 96000;//码率 MediaCodecInfo.CodecProfileLevel.AACObjectLC >= 80Kbps
     Thread mEncoderThread;
     private AudioRecord mRecord;
     private byte[] mBuffer;
     private MediaCodec.BufferInfo mBufferInfo;
     private byte[] mFrameByte;
-    private int mBufferSize = 1024;
+    private int mBufferSize = 640;
 
     FileWriter mFileWriter;
 
@@ -56,8 +55,8 @@ public class AudioEncoderActivity extends AppCompatActivity {
                     format.setInteger(MediaFormat.KEY_BIT_RATE, mBitRate);
                     format.setInteger(MediaFormat.KEY_CHANNEL_COUNT, 2);
                     format.setInteger(MediaFormat.KEY_SAMPLE_RATE, mSampleRate);
-                    format.setString(MediaFormat.KEY_MIME,audioMime);
-                    format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLTP);
+                    format.setString(MediaFormat.KEY_MIME, audioMime);
+                    format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
                     mAudioCodec = MediaCodec.createEncoderByType(audioMime);
                     mAudioCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
                     mAudioCodec.start();
@@ -67,7 +66,7 @@ public class AudioEncoderActivity extends AppCompatActivity {
                     int minBufferSize = AudioRecord.getMinBufferSize(mSampleRate, AudioFormat.CHANNEL_IN_STEREO,
                             AudioFormat.ENCODING_PCM_16BIT);
                     mRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, mSampleRate,
-                            AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize * 2);
+                            AudioFormat.CHANNEL_IN_STEREO, AudioFormat.ENCODING_PCM_16BIT, minBufferSize);
                     mRecord.startRecording();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -86,17 +85,17 @@ public class AudioEncoderActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         isRunning = false;
-        if (mAudioCodec != null){
+        if (mAudioCodec != null) {
             mAudioCodec.stop();
             mAudioCodec.release();
             mAudioCodec = null;
         }
-        if (mRecord != null){
+        if (mRecord != null) {
             mRecord.stop();
             mRecord.release();
             mRecord = null;
         }
-        if (mFileWriter != null){
+        if (mFileWriter != null) {
             mFileWriter.stopWrite();
         }
     }
@@ -123,54 +122,62 @@ public class AudioEncoderActivity extends AppCompatActivity {
         while (outputBufferIndex >= 0) {
             ByteBuffer outputBuffer = mAudioCodec.getOutputBuffer(outputBufferIndex);
             //给adts头字段空出7的字节
-            int length=mBufferInfo.size+7;
-            if(mFrameByte==null||mFrameByte.length<length){
-                mFrameByte=new byte[length];
+            int length = mBufferInfo.size + 7;
+            if (mFrameByte == null || mFrameByte.length < length) {
+                mFrameByte = new byte[length];
             }
             outputBuffer.position(mBufferInfo.offset);
             outputBuffer.limit(mBufferInfo.offset + mFrameByte.length);
-            addADTStoPacket(mFrameByte,length);
-            outputBuffer.get(mFrameByte,7,mBufferInfo.size);
-            outputBuffer.position(mBufferInfo.offset);
-//            boolean isSusscess1=mClient.sendInt(length);
-//            boolean isSusscess2=mClient.send(mFrameByte,0,length);
-//            if(!(isSusscess1&&isSusscess2)){
-//                isRunning=false;
-//                mClient.release();
-//            }
+            addADTStoPacket(mFrameByte, length);
+            outputBuffer.get(mFrameByte, 7, mBufferInfo.size);
+
             mFileWriter.writeToFile(ByteBuffer.wrap(mFrameByte));
             mAudioCodec.releaseOutputBuffer(outputBufferIndex, false);
             outputBufferIndex = mAudioCodec.dequeueOutputBuffer(mBufferInfo, 0);
 
-            Log.d("mFrameByte === ",mFrameByte.toString());
+            Log.d("mFrameByte === ", mFrameByte.toString());
         }
     }
 
     /**
+     * 0: 96000 Hz
+     * 1: 88200 Hz
+     * 2: 64000 Hz
+     * 3: 48000 Hz
+     * 4: 44100 Hz
+     * 5: 32000 Hz
+     * 6: 24000 Hz
+     * 7: 22050 Hz
+     * 8: 16000 Hz
+     * 9: 12000 Hz
+     * 10: 11025 Hz
+     * 11: 8000 Hz
+     * 12: 7350 Hz
      * 给编码出的aac裸流添加adts头字段
-     * @param packet 要空出前7个字节，否则会搞乱数据
+     *
+     * @param packet    要空出前7个字节，否则会搞乱数据
      * @param packetLen
      */
     private void addADTStoPacket(byte[] packet, int packetLen) {
         int profile = 2;  //AAC LC
         int freqIdx = 4;  //44.1KHz
         int chanCfg = 2;  //CPE
-        packet[0] = (byte)0xFF;
-        packet[1] = (byte)0xF9;
-        packet[2] = (byte)(((profile-1)<<6) + (freqIdx<<2) +(chanCfg>>2));
-        packet[3] = (byte)(((chanCfg&3)<<6) + (packetLen>>11));
-        packet[4] = (byte)((packetLen&0x7FF) >> 3);
-        packet[5] = (byte)(((packetLen&7)<<5) + 0x1F);
-        packet[6] = (byte)0xFC;
+        packet[0] = (byte) 0xFF;
+        packet[1] = (byte) 0xF1;//MPEG-2:0xF9  MPEG-4:0xF1
+        packet[2] = (byte) (((profile - 1) << 6) + (freqIdx << 2) + (chanCfg >> 2));
+        packet[3] = (byte) (((chanCfg & 3) << 6) + (packetLen >> 11));
+        packet[4] = (byte) ((packetLen & 0x7FF) >> 3);
+        packet[5] = (byte) (((packetLen & 7) << 5) + 0x1F);
+        packet[6] = (byte) 0xFC;
     }
 
-    class EncoderThread extends Thread{
+    class EncoderThread extends Thread {
         @Override
         public void run() {
             mBuffer = new byte[mBufferSize];
-            while (isRunning){
-                int num = mRecord.read(mBuffer,0,mBufferSize);
-                Log.d("tag === ",num + " " + mBuffer.toString());
+            while (isRunning) {
+                int num = mRecord.read(mBuffer, 0, mBufferSize);
+                Log.d("tag === ", num + " " + mBuffer.toString());
                 encode(mBuffer);
             }
 
