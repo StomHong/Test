@@ -28,10 +28,9 @@ public class AudioEncoderActivity extends AppCompatActivity {
     private AudioRecord mAudioRecorder;
     private long prevOutputPTSUs;
     private int mSampleRate = 44100;//采样率
-    private int mBitRate = 96000;//码率 MediaCodecInfo.CodecProfileLevel.AACObjectLC >= 80Kbps
+    private int mBitRate = 128000;//码率 MediaCodecInfo.CodecProfileLevel.AACObjectLC >= 80Kbps
     Thread mEncoderThread;
     private AudioRecord mRecord;
-    private byte[] mBuffer;
     private MediaCodec.BufferInfo mBufferInfo;
     private byte[] mFrameByte;
     private int mBufferSize = 640;
@@ -126,11 +125,10 @@ public class AudioEncoderActivity extends AppCompatActivity {
             if (mFrameByte == null || mFrameByte.length < length) {
                 mFrameByte = new byte[length];
             }
-            outputBuffer.position(mBufferInfo.offset);
-            outputBuffer.limit(mBufferInfo.offset + mFrameByte.length);
-            addADTStoPacket(mFrameByte, length);
+//            outputBuffer.position(mBufferInfo.offset);
+//            outputBuffer.limit(mBufferInfo.offset + mFrameByte.length);
             outputBuffer.get(mFrameByte, 7, mBufferInfo.size);
-
+            addADTStoPacket(mFrameByte, length);
             mFileWriter.writeToFile(ByteBuffer.wrap(mFrameByte));
             mAudioCodec.releaseOutputBuffer(outputBufferIndex, false);
             outputBufferIndex = mAudioCodec.dequeueOutputBuffer(mBufferInfo, 0);
@@ -168,17 +166,22 @@ public class AudioEncoderActivity extends AppCompatActivity {
         packet[3] = (byte) (((chanCfg & 3) << 6) + (packetLen >> 11));
         packet[4] = (byte) ((packetLen & 0x7FF) >> 3);
         packet[5] = (byte) (((packetLen & 7) << 5) + 0x1F);
-        packet[6] = (byte) 0xFC;
+        packet[6] = (byte) 0xFC;//一般固定为0xFC
     }
 
     class EncoderThread extends Thread {
         @Override
         public void run() {
-            mBuffer = new byte[mBufferSize];
+
+           byte[] buffer = new byte[1024];
             while (isRunning) {
-                int num = mRecord.read(mBuffer, 0, mBufferSize);
-                Log.d("tag === ", num + " " + mBuffer.toString());
-                encode(mBuffer);
+                int num = mRecord.read(buffer,0,  buffer.length);
+                if (num > 0) {
+                    Log.d("tag === ", num + " " + buffer.toString());
+                    encode(buffer);
+                } else {
+                    Log.e("tag === ", num + " 读取录音数据出错");
+                }
             }
 
         }
