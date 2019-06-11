@@ -28,12 +28,10 @@ public class AudioEncoderActivity extends AppCompatActivity {
     private AudioRecord mAudioRecorder;
     private long prevOutputPTSUs;
     private int mSampleRate = 44100;//采样率
-    private int mBitRate = 128000;//码率 MediaCodecInfo.CodecProfileLevel.AACObjectLC >= 80Kbps
+    private int mBitRate = 96000;//码率 MediaCodecInfo.CodecProfileLevel.AACObjectLC >= 80Kbps
     Thread mEncoderThread;
     private AudioRecord mRecord;
     private MediaCodec.BufferInfo mBufferInfo;
-    private byte[] mFrameByte;
-    private int mBufferSize = 640;
 
     FileWriter mFileWriter;
 
@@ -119,21 +117,19 @@ public class AudioEncoderActivity extends AppCompatActivity {
 
         int outputBufferIndex = mAudioCodec.dequeueOutputBuffer(mBufferInfo, 0);
         while (outputBufferIndex >= 0) {
-            ByteBuffer outputBuffer = mAudioCodec.getOutputBuffer(outputBufferIndex);
-            //给adts头字段空出7的字节
+            ByteBuffer outputData = mAudioCodec.getOutputBuffer(outputBufferIndex);
+            //音频帧长度（头部+数据）
             int length = mBufferInfo.size + 7;
-            if (mFrameByte == null || mFrameByte.length < length) {
-                mFrameByte = new byte[length];
-            }
-//            outputBuffer.position(mBufferInfo.offset);
-//            outputBuffer.limit(mBufferInfo.offset + mFrameByte.length);
-            outputBuffer.get(mFrameByte, 7, mBufferInfo.size);
-            addADTStoPacket(mFrameByte, length);
-            mFileWriter.writeToFile(ByteBuffer.wrap(mFrameByte));
+            byte[] adtsHeader = new byte[7];
+            addADTStoPacket(adtsHeader, length);
+            ByteBuffer outputBuffer = ByteBuffer.allocate(length);
+            outputBuffer.put(adtsHeader);
+            outputBuffer.put(outputData);
+            outputBuffer.flip();
+            mFileWriter.writeToFile(outputBuffer);
             mAudioCodec.releaseOutputBuffer(outputBufferIndex, false);
             outputBufferIndex = mAudioCodec.dequeueOutputBuffer(mBufferInfo, 0);
 
-            Log.d("mFrameByte === ", mFrameByte.toString());
         }
     }
 
