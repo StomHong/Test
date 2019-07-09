@@ -5,6 +5,7 @@ import android.media.AudioRecord;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.media.MediaMuxer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Environment;
@@ -35,6 +36,10 @@ public class AudioEncoderActivity extends AppCompatActivity {
 
     FileWriter mFileWriter;
 
+    MediaMuxer muxer;
+    int audioTrackIndex = -1;
+    long startTime;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,7 +48,7 @@ public class AudioEncoderActivity extends AppCompatActivity {
     }
 
     private void init() {
-        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/test/audio.aac";
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath() + "/test/audio.mp4";
         findViewById(R.id.btn_encode_audio).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -72,8 +77,15 @@ public class AudioEncoderActivity extends AppCompatActivity {
                 mEncoderThread = new EncoderThread();
                 mEncoderThread.start();
 
-                mFileWriter = new FileWriter(path);
-                mFileWriter.startWrite();
+//                mFileWriter = new FileWriter(path);
+//                mFileWriter.startWrite();
+
+                try {
+                    muxer = new MediaMuxer(path, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -95,6 +107,10 @@ public class AudioEncoderActivity extends AppCompatActivity {
         if (mFileWriter != null) {
             mFileWriter.stopWrite();
         }
+        if (muxer != null){
+            muxer.stop();
+            muxer.release();
+        }
     }
 
     @Override
@@ -111,13 +127,20 @@ public class AudioEncoderActivity extends AppCompatActivity {
             inputBuffer.clear();
             inputBuffer.put(data);
             inputBuffer.limit(data.length);
+            if (audioTrackIndex == -1) {
+                startTime = System.nanoTime();
+            }
             mAudioCodec.queueInputBuffer(inputBufferIndex, 0, data.length,
-                    System.nanoTime(), 0);
+                    (System.nanoTime()-startTime)/1000, 0);
         }
 
         int outputBufferIndex = mAudioCodec.dequeueOutputBuffer(mBufferInfo, 0);
         while (outputBufferIndex >= 0) {
             ByteBuffer outputData = mAudioCodec.getOutputBuffer(outputBufferIndex);
+            if (audioTrackIndex == -1) {
+                audioTrackIndex = muxer.addTrack(mAudioCodec.getOutputFormat());
+                muxer.start();
+            }
             //音频帧长度（头部+数据）
             int length = mBufferInfo.size + 7;
             byte[] adtsHeader = new byte[7];
@@ -126,7 +149,10 @@ public class AudioEncoderActivity extends AppCompatActivity {
             outputBuffer.put(adtsHeader);
             outputBuffer.put(outputData);
             outputBuffer.flip();
-            mFileWriter.writeToFile(outputBuffer);
+//            mFileWriter.writeToFile(outputBuffer);
+
+            muxer.writeSampleData(audioTrackIndex,outputBuffer,mBufferInfo);
+
             mAudioCodec.releaseOutputBuffer(outputBufferIndex, false);
             outputBufferIndex = mAudioCodec.dequeueOutputBuffer(mBufferInfo, 0);
 
